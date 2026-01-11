@@ -25,10 +25,11 @@ if __name__ == "__main__":  # required on macOS / Windows
     ##CONFIGURATION##
     #################
     output_name = "test.o"
-    outputFormat = "ascii" #root, ascii
+    outputFormat = "ascii" #ascii, MARLEY-style output
     nps = 10000
     neutrino_direction = [0,0,1]
 
+    #Interpolate energies over this grid
     interpolationStep_MeV = 0.01 #Interpolate digitized xs plots with this precision
     maxEnergy_MeV = 53
     energies_MeV_interp = np.arange(0,maxEnergy_MeV,interpolationStep_MeV)
@@ -50,7 +51,7 @@ if __name__ == "__main__":  # required on macOS / Windows
 
     #From NucDeEx
     #Filenames of format: Ex_00.250_ldmodel2_parity1.root
-    #containing tree 
+    #containing "tree" with branches Ex_MeV, size, PDG, mass_MeV, totalE_MeV, KE_MeV, PMag_MeV, PX_MeV, PY_MeV, PZ_MeV 
     deexcitation_folder = "data/nucdeex/"
     if not deexcitation_folder.endswith("/"):
         deexcitation_folder+="/"
