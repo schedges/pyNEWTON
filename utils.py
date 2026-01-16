@@ -489,9 +489,11 @@ def sampleEvent(args):
   #Estimate lepton energy (get approximate value)
   Ee_sampled = energies_MeV_interp[energy_idx] - event_excitation_energy_MeV - threshold
   Ee_idx = np.searchsorted(energies_MeV_interp,Ee_sampled)
+  header["Ee_sampled"] = Ee_sampled
 
   #Use approximate lepton energy to sample lepton angle
   event_lepton_theta_deg = np.random.choice(angles_deg_interp,p=lepton_angle_probs[:,Ee_idx])
+  header["theta_deg"] = event_lepton_theta_deg
   event_lepton_theta_rad = event_lepton_theta_deg*np.pi/180.
   #Calculate lepton energy
   Ee_MeV = calcLeptonEnergy(Enu, event_lepton_theta_rad, event_excitation_energy_MeV,M_tar=target_nuc_mass,M_res=res_nuc_mass)
@@ -559,4 +561,4 @@ def sampleEvent(args):
                               "mass":m_i,
                               "charge":charge})
           
-  return header,inParticles,outParticles,Ee_sampled
+  return header,inParticles,outParticles

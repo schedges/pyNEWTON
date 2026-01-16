@@ -111,11 +111,15 @@ if __name__ == "__main__":  # required on macOS / Windows
     #Intepolate the above plot over our energy/angle grid
     angle_energy_xs_cm2 = utils.interpolateHaxtonAngles(angles_raw,angles_deg_interp,lepton_energies_raw,energies_MeV_interp,haxton_xs_raw)
 
+    theta_rad_interp = np.deg2rad(angles_deg_interp)
+    sin_weights = np.sin(theta_rad_interp)
+    weighted_xs = angle_energy_xs_cm2 * sin_weights[:, np.newaxis]
+
     #Create probabilitiy distributions, normalized per lepton energy
-    lepton_angle_probs = np.zeros_like(angle_energy_xs_cm2)
-    colsum = angle_energy_xs_cm2.sum(axis=0)
+    lepton_angle_probs = np.zeros_like(weighted_xs)
+    colsum = weighted_xs.sum(axis=0)
     mask = colsum > 0
-    lepton_angle_probs[:, mask] = angle_energy_xs_cm2[:, mask] / colsum[mask]
+    lepton_angle_probs[:, mask] = weighted_xs[:, mask] / colsum[mask]
 
     ########################
     ##LOAD UP NUCDEEX DATA##
