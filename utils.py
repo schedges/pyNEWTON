@@ -463,7 +463,6 @@ def sampleEvent(args):
   #########
   #Generate input particles line
   #Incident neutrino
-  Enu = energies_MeV_interp[energy_idx]
   PXnu,PYnu,PZnu = calcMomentum(Enu,0,neutrino_direction)
   p_nu_vec = np.array([PXnu, PYnu, PZnu])
   inputParticles = []
@@ -489,6 +488,7 @@ def sampleEvent(args):
   #Estimate lepton energy (get approximate value)
   Ee_sampled = energies_MeV_interp[energy_idx] - event_excitation_energy_MeV - threshold
   Ee_idx = np.searchsorted(energies_MeV_interp,Ee_sampled)
+  Ee_idx = np.clip(Ee_idx, 0, len(energies_MeV_interp)-1)
   header["Ee_sampled"] = Ee_sampled
 
   #Use approximate lepton energy to sample lepton angle

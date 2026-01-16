@@ -96,8 +96,12 @@ if __name__ == "__main__":  # required on macOS / Windows
 
     #Calculate folded cross section
     folded_spectrum = np.multiply(xs_cm2_interp,dar_spectrum)
+
     #Calculate flux-averaged spectrum
-    flux_averaged_xs = np.average(folded_spectrum)
+    num = np.trapezoid(xs_cm2_interp * dar_spectrum, energies_MeV_interp)
+    den = np.trapezoid(dar_spectrum, energies_MeV_interp)
+    flux_averaged_xs = num / den
+
     flux_averaged_xs_naturalunits = flux_averaged_xs/utils.hbar_c_squared
     # Normalize
     neutrino_energy_probs = folded_spectrum / folded_spectrum.sum()
