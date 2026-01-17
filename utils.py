@@ -2,11 +2,7 @@
 #
 # Functions:
 #   getNameFromPDG(pdgCode) : using the pdgDict defined here, returns the name of the particle from the PDG code
-#   loadCrossSectionCSV(fname) : Loads a CSV of format Energy [MeV], xs [cm2] into np arrays and returns
-#   loadNazakatoPartialXSData(fname) : Reads the partial xs data from NEWTON. Format is 
-#       Energy [MeV], J, Parity (1='-',0='+'), xs@20MeV [cm2], xs@40MeV [cm2], xs@60MeV[cm2]
-#       where Energy is excited 16F level w.r.t. to 16O ground state, i.e. offset by 14.91 MeV. 
-#       Returns these np arrays in this order.
+#  
 #   solveNakazatoCoeffs(levels,xs1,xs2,xs3,E1=20,E2=40,E3=60,threshold=1e-46): Solves the equations from the nakazato paper
 #       to get a functional form of the cross section. We set xs less than 1e-46 to 0 as some of the values
 #       in the input data are speculative, leading to odd fit parameters. Returns coefficients.   
@@ -84,57 +80,6 @@ def getNameFromPDG(pdgCode):
     print(f"{pdgCode} not yet defined in dict!")
     sys.exit()
 
-#Loads a CSV of format Energy [MeV], xs [cm2] into np arrays and returns
-#'#' used to define comments
-def loadCrossSectionCSV(fname):
-  energies_MeV_raw = []
-  xs_cm2_raw = []
-  for line in open(fname,"r"):
-    if not line.startswith("#"):
-      line=line.strip("\n")
-      if not line=="":
-        lineParts = line.split(",")
-        if len(lineParts)==2:
-          energies_MeV_raw.append(float(lineParts[0]))
-          xs_cm2_raw.append(float(lineParts[1]))
-  return np.array(energies_MeV_raw),np.array(xs_cm2_raw)
-
-# Reads the partial xs data from NEWTON. Format is 
-#   Energy [MeV], J, Parity (1='-',0='+'), xs@20MeV [cm2], xs@40MeV [cm2], xs@60MeV[cm2]
-# where Energy is excited 16F level w.r.t. to 16O ground state, i.e. offset by 14.91 MeV. 
-# Returns these np arrays in this order.
-def loadNazakatoPartialXSData(fname):
-  excitedLevels_MeV = []
-  excitedLevels_J = []
-  excitedLevels_parity = []
-  excitedXS_20MeV = []
-  excitedXS_40MeV = []
-  excitedXS_60MeV = []
-  for line in open(fname,"r"):
-    if not line.startswith("#"):
-      line=line.strip("\n")
-      if not line=="":
-        lineParts = line.split(",")
-        if len(lineParts)==6:
-          excitedLevels_MeV.append(float(lineParts[0]))
-          excitedLevels_J.append(int(lineParts[1]))
-          if lineParts[2]=="1":
-            parity = "-"
-          else:
-            parity = "+"
-          excitedLevels_parity.append(parity)
-          excitedXS_20MeV.append(float(lineParts[3]))
-          excitedXS_40MeV.append(float(lineParts[4]))
-          excitedXS_60MeV.append(float(lineParts[5]))
-  
-  #FIT COEFFICIENTS
-  excitedLevels_MeV = np.asarray(excitedLevels_MeV)
-  excitedXS_20MeV = np.asarray(excitedXS_20MeV)
-  excitedXS_40MeV = np.asarray(excitedXS_40MeV)
-  excitedXS_60MeV = np.asarray(excitedXS_60MeV)
-
-  return np.array(excitedLevels_MeV),np.array(excitedLevels_J),np.array(excitedLevels_parity),np.array(excitedXS_20MeV),np.array(excitedXS_40MeV),np.array(excitedXS_60MeV)
-
 # Solves the equations from the nakazato paper to get a functional form of the cross section. 
 # We set xs less than 1e-46 to 0 as some of the values in the input data are speculative, 
 # leading to odd fit parameters. Returns coefficients. Again, levels here defined w.r.t. 16O ground state. 
@@ -186,79 +131,111 @@ def solveNakazatoCoeffs(levels,xs1,xs2,xs3,E1=20.,E2=40.,E3=60.,threshold=1e-46)
 def calcNakazatoPartialXS(levels,energies,c1s,c2s,c3s):
   partial_xs = []
 
+  #Step through excited states
   for ilev,Ex_MeV in enumerate(levels):
     xs = np.zeros_like(energies)
+    mask = energies > (Ex_MeV+mass_e_MeV)
+
+    energies_valid = energies[mask]
+    Lam = np.log10(np.power(energies_valid,0.25)-np.power(Ex_MeV,0.25))
     if c3s[ilev]==0:
-      for inrg,E in enumerate(energies):
-        if E<=Ex_MeV + mass_e_MeV: #Kinematic requirement
-          continue
-        Lam = np.log10(np.power(E,0.25)-np.power(Ex_MeV,0.25))
-        log10XS = c1s[ilev] + c2s[ilev]*Lam
-        xs[inrg] = np.power(10,log10XS)
+      log10XS = c1s[ilev] + c2s[ilev]*Lam
     else:
-      for inrg,E in enumerate(energies):
-        if E<=Ex_MeV + mass_e_MeV: #Kinematic requirements
-          continue
-        Lam = np.log10(np.power(E,0.25)-np.power(Ex_MeV,0.25))
-        log10XS = c1s[ilev] + c2s[ilev]*Lam + c3s[ilev]*Lam*Lam
-        xs[inrg] = np.power(10,log10XS)
-    
+      log10XS = c1s[ilev] + c2s[ilev]*Lam + c3s[ilev]*Lam*Lam
+
+    xs[mask] = np.power(10,log10XS)
     partial_xs.append(xs)
+
   return partial_xs
 
-def loadHaxtonAngles(fname):
-  haxton_lepton_degrees = [15.,30.,45.,60.,75.,90.,105.,120.,135.,150.,165.]
-  
-  lepton_energies_raw = [[] for _ in haxton_lepton_degrees]
-  lepton_xs_raw       = [[] for _ in haxton_lepton_degrees]
-  
-  for line in open(fname,"r"):
-    if line.startswith("#"):
-      continue
-    line=line.strip("\n")
-    if not line=="":
-      lineParts = line.split(",")
+def interpolateHaxtonMuDARAngles(angles_raw,angles_interp,lepton_energies_raw,energies_interp,lepton_xs_raw):
+  #Do energy interpolation
+  lepton_energy_vs_angle_xs_lists = []
+  for ideg,deg in enumerate(angles_raw):
+    row = np.interp(energies_interp, lepton_energies_raw[ideg], lepton_xs_raw[ideg], left=0, right=0)
+    lepton_energy_vs_angle_xs_lists.append(row)
 
-      for i in range(len(haxton_lepton_degrees)):
-        lepton_energy_str  = lineParts[2*i]
-        lepton_xs_str =  lineParts[2*i + 1]
+  #Copy distributions at 15 deg for 0 deg, and 165 deg for 180 deg
+  lepton_energy_vs_angle_xs_lists.insert(0, lepton_energy_vs_angle_xs_lists[0])
+  lepton_energy_vs_angle_xs_lists.append(lepton_energy_vs_angle_xs_lists[-1])
+  new_angles = np.concatenate(([0.],angles_raw,[180.]))
 
-        if lepton_energy_str != "":
-          lepton_energies_raw[i].append(float(lepton_energy_str))
-          lepton_xs_raw[i].append(float(lepton_xs_str))
-  return haxton_lepton_degrees,lepton_energies_raw,lepton_xs_raw
-
-def interpolateHaxtonAngles(angles_raw,angles_interp,lepton_energies_raw,energies_interp,lepton_xs_raw):
-  #Use 15 deg dist for 0, 165 deg dist for 180
-  angles_tmp = angles_raw.copy()
-  lepton_energies_tmp = lepton_energies_raw.copy()
-  lepton_xs_tmp = lepton_xs_raw.copy()
-  angles_tmp.insert(0,0.)
-  lepton_energies_tmp.insert(0,list(lepton_energies_raw[0]))
-  lepton_xs_tmp.insert(0,list(lepton_xs_raw[0]))
-  angles_tmp.append(180.)
-  lepton_energies_tmp.append(list(lepton_energies_raw[-1]))
-  lepton_xs_tmp.append(list(lepton_xs_raw[-1]))
-
-  #Interpolate lepton energies over each angle
-  lepton_xs_interp = []
-  for ideg,deg in enumerate(angles_tmp):
-    lepton_xs_interp.append(np.interp(energies_interp,lepton_energies_tmp[ideg],lepton_xs_tmp[ideg],left=0,right=0))
-
-  #For interpolator for interpolating angles, with raw angles and interpolated energy as the axis.
-  lepton_xs_interp = np.array(lepton_xs_interp)
+  #Create grid interpolations
   grid_interp = RegularGridInterpolator(
-      (np.array(angles_tmp), energies_interp),
-      lepton_xs_interp,
+      (new_angles, energies_interp),
+      np.array(lepton_energy_vs_angle_xs_lists),
       bounds_error=False,
       fill_value=0.0   # for energy outside range
   )
 
-  #Use that to interpolate over our angles grid.
+  #Create grid to evaluate xs at
   A, E = np.meshgrid(angles_interp, energies_interp, indexing="ij")
-  pts = np.stack([A.ravel(), E.ravel()], axis=-1)
-  angle_energy_xs_cm2 = grid_interp(pts, method="linear").reshape(len(angles_interp), len(energies_interp))
+
+  #Interpolate
+  angle_energy_xs_cm2 = grid_interp((A, E), method="linear")
+  
   return angle_energy_xs_cm2
+
+#DOES A SINGLE EX STATE
+def interpolateNEWTONAnglesAndNormalize(angles_raw,angles_interp,energies_raw,energies_interp,neutrino_energy_vs_angle_vs_xs):
+  neutrino_energy_vs_angle_xs_lists = []
+
+  for ideg,deg in enumerate(angles_raw):
+    row = np.interp(energies_interp, energies_raw,neutrino_energy_vs_angle_vs_xs[:,ideg],left=0,right=0)
+    neutrino_energy_vs_angle_xs_lists.append(row)
+
+  #Copy first angle for 0 deg, last angle for 180 deg
+  neutrino_energy_vs_angle_xs_lists.insert(0, neutrino_energy_vs_angle_xs_lists[0])
+  neutrino_energy_vs_angle_xs_lists.append(neutrino_energy_vs_angle_xs_lists[-1])
+  new_angles = np.concatenate(([0.],angles_raw,[180.]))
+
+  #Create grid interpolations
+  grid_interp = RegularGridInterpolator(
+      (new_angles, energies_interp),
+      np.array(neutrino_energy_vs_angle_xs_lists),
+      bounds_error=False,
+      fill_value=0.0   # for energy outside range
+  )
+
+  #Create grid to evaluate xs at
+  A, E = np.meshgrid(angles_interp, energies_interp, indexing="ij")
+
+  #Interpolate
+  angle_energy_xs_cm2 = grid_interp((A, E), method="linear")
+
+  #Normalize 
+  angles_rad = np.radians(angles_interp)
+    
+  sin_weight = 2 * np.pi * np.sin(angles_rad)[:, np.newaxis]
+  unnormalized_pdf = angle_energy_xs_cm2 * sin_weight
+  
+  #Integrate over the angle axis (axis 0) using the trapezoid rule
+  total_xs_per_energy = np.trapz(unnormalized_pdf, x=angles_rad, axis=0)
+  
+  #Divide by the total cross section to get the PDF
+  norm_factor = np.where(total_xs_per_energy > 0, total_xs_per_energy, 1.0)
+  pdf = angle_energy_xs_cm2 / norm_factor
+
+  return pdf,unnormalized_pdf
+
+def checkNewtonAnglesPlot(xs_matrices_raw, folded_spectrum, excitedLevels_MeV, energies_MeV_interp,threshold=15.412):
+  total_weighted_xs = np.zeros_like(xs_matrices_raw[0])
+
+  #Normalize neutrino spectrum
+  norm_spectrum = folded_spectrum / np.trapz(folded_spectrum, x=energies_MeV_interp)
+
+  # Iterate through each excitation state matrix
+  for i, xs_matrix in enumerate(xs_matrices_raw):
+    E_ex = excitedLevels_MeV[i]
+
+    #Weigh the Enu vs. lepton vs. xs matrix by the neutrino spectrum
+    weighted_xs = xs_matrix * norm_spectrum
+    Ex_xs = np.array([np.interp(energies_MeV_interp, energies_MeV_interp - (E_ex + threshold), row, left=0, right=0) for row in weighted_xs])
+
+    # 4. Sum it up
+    total_weighted_xs += Ex_xs  
+        
+  return total_weighted_xs
 
 #Loads up NucDeEx root trees as pd data frames, assuming a specific filename and root format
 def loadNucDeExData(folderName):
