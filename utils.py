@@ -1,26 +1,3 @@
-#Constants and functions used by pyNEWTON
-#
-# Functions:
-#   getNameFromPDG(pdgCode) : using the pdgDict defined here, returns the name of the particle from the PDG code
-#  
-#   solveNakazatoCoeffs(levels,xs1,xs2,xs3,E1=20,E2=40,E3=60,threshold=1e-46): Solves the equations from the nakazato paper
-#       to get a functional form of the cross section. We set xs less than 1e-46 to 0 as some of the values
-#       in the input data are speculative, leading to odd fit parameters. Returns coefficients.   
-#   calcNakazatoPartialXS(levels,energies,c1s,c2s,c3s): Calculates the partial cross sections of each level on our energies
-#       grid, where c1s, c2s, and c3 are coefficients solved above for each level.
-#   loadHaxtonAngles(fname): Loads the curves from Haxton plot of energy vs. cross section for different neutrino-lepton
-#       opening angles.
-#   interpolateHaxtonAngles(angles_raw,angles_interp,lepton_energies_raw,energies_interp,lepton_xs_raw):
-#       Takes arrays of raw angles, raw energies from the haxton data, along with our grids to interpolate over, and 
-#       does the interpolation. Assumes the xs distributions at 0-deg and 180-deg match up with the 15-deg and 165-deg
-#       shapes respectively.
-#   loadNucDeExData(foldername): Loads up NucDeEx root trees as pd data frames, assuming a specific filename and root format
-#   calcMomentum(E, m, direction): Given an energy, mass, and direction, calculate px,py,pz
-#   calcLeptonEnergy(E_nu,theta_rad,Ex,M_tar=nuc_mass_16O_MeV,M_res=nuc_mass_16F_MeV,M_lep=mass_e_MeV) :
-#       Given a neutrino energy, opening angle between lepton and neutrino, an excitation level, and appropriate masses,
-#       calculate the energy of the lepton
-#   rotateLeptonToLabFrame
-#   sampleEvent
 import os
 import sys
 import numpy as np
@@ -210,11 +187,9 @@ def interpolateNEWTONAnglesAndNormalize(angles_raw,angles_interp,energies_raw,en
   unnormalized_pdf = angle_energy_xs_cm2 * sin_weight
   
   #Integrate over the angle axis (axis 0) using the trapezoid rule
-  total_xs_per_energy = np.trapz(unnormalized_pdf, x=angles_rad, axis=0)
-  
-  #Divide by the total cross section to get the PDF
+  total_xs_per_energy = np.sum(unnormalized_pdf, axis=0)
   norm_factor = np.where(total_xs_per_energy > 0, total_xs_per_energy, 1.0)
-  pdf = angle_energy_xs_cm2 / norm_factor
+  pdf = unnormalized_pdf / norm_factor
 
   return pdf,unnormalized_pdf
 
@@ -236,27 +211,6 @@ def checkNewtonAnglesPlot(xs_matrices_raw, folded_spectrum, excitedLevels_MeV, e
     total_weighted_xs += Ex_xs  
         
   return total_weighted_xs
-
-#Loads up NucDeEx root trees as pd data frames, assuming a specific filename and root format
-def loadNucDeExData(folderName):
-    ex_filenames = [i for i in os.listdir(folderName) if i.endswith(".root")]
-    ex_filenames.sort()
-    ex_levels = [round(float(i.split("_")[1]),2) for i in ex_filenames]
-    ex_levels.insert(0,0)
-    ex_dfs = [None]
-
-    for fname in ex_filenames:
-        fpath = folderName+fname
-        with up.open(fpath) as f:
-            # If there's only one TTree in the file
-            tree = f["tree"]
-
-            # Load all branches into a DataFrame
-            df = tree.arrays(library="pd")
-
-        ex_dfs.append(df)
-        
-    return ex_dfs
 
 #Given an energy, mass, and direction, calculate px,py,pz
 def calcMomentum(E, m, direction):
@@ -405,6 +359,7 @@ def sampleEvent(args):
   resName=args[13]
   neutrinoName=args[14]
   leptonName=args[15]
+  angle_sampling_type = args[16]
   
   outParticles = []
   inParticles = []
@@ -420,7 +375,8 @@ def sampleEvent(args):
   event_excitation_twoJ = int(2*excitation_levels_J[ex_idx])
   event_excitation_parity = excited_levels_parity[ex_idx]
 
-  header={"Ex":event_excitation_energy_MeV,
+  header={"Enu":Enu,
+          "Ex":event_excitation_energy_MeV,
           "twoJ":event_excitation_twoJ,
           "parity":event_excitation_parity}
 
@@ -469,7 +425,12 @@ def sampleEvent(args):
   header["Ee_sampled"] = Ee_sampled
 
   #Use approximate lepton energy to sample lepton angle
-  event_lepton_theta_deg = np.random.choice(angles_deg_interp,p=lepton_angle_probs[:,Ee_idx])
+  if angle_sampling_type=="MuDAR":
+    event_lepton_theta_deg = np.random.choice(angles_deg_interp,p=lepton_angle_probs[:,Ee_idx])
+  else:
+    Enu_idx = np.searchsorted(energies_MeV_interp,Enu)
+    event_lepton_theta_deg = np.random.choice(angles_deg_interp,p=lepton_angle_probs[ex_idx,:,Enu_idx])
+
   header["theta_deg"] = event_lepton_theta_deg
   event_lepton_theta_rad = event_lepton_theta_deg*np.pi/180.
   #Calculate lepton energy
@@ -496,8 +457,8 @@ def sampleEvent(args):
   PXres, PYres, PZres = p_res_vec
   #Define boost vector of recoiling nucleus (beta = p/E)
   beta_vec = np.array([PXres, PYres, PZres]) / Eres_MeV
-  beta_mag2 = np.dot(beta_vec, beta_vec)
-  #gamma = 1.0 / np.sqrt(max(1e-12, 1.0 - beta_mag2)) #TODO: Not sure this catch is actually needed
+  beta_mag2 = np.dot(beta_vec, beta_vec)  
+  beta_mag2 = min(beta_mag2, 1.0 - 1e-12) 
   gamma = 1./np.sqrt(1.-beta_mag2)
 
   #Process De-excitation Products
@@ -528,7 +489,10 @@ def sampleEvent(args):
           E_lab = gamma * (E_rest + np.dot(beta_vec, p_rest))
           
           #Calculate momentum in lab frame
-          p_lab = p_rest + ((gamma - 1) * np.dot(p_rest, beta_vec) / beta_mag2 + gamma * E_rest) * beta_vec
+          if beta_mag2 < 1e-12:
+            p_lab = p_rest
+          else:
+            p_lab = p_rest + ((gamma - 1) * np.dot(p_rest, beta_vec) / beta_mag2 + gamma * E_rest) * beta_vec
 
           outParticles.append({"pdg":pdg_dict[particleName]["pdg"],
                               "totalE":E_lab,

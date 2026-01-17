@@ -13,6 +13,7 @@
 #   Output: Returns these np arrays in this order. Parity output as "+" or "-"
 import pandas as pd
 import numpy as np
+import uproot as up
 import os
 
 #######################
@@ -79,6 +80,30 @@ def loadHaxtonMuDARAngles(fname):
     lepton_xs.append(x_list)
 
   return np.array(haxton_lepton_degrees),lepton_energies,lepton_xs
+
+###################
+##loadNucDeExData##
+###################
+def loadNucDeExData(folderName):
+  ex_filenames = [i for i in os.listdir(folderName) if i.endswith(".root")]
+  ex_filenames.sort()
+  ex_levels = [round(float(i.split("_")[1]),2) for i in ex_filenames]
+  ex_levels.insert(0,0)
+  ex_dfs = [None]
+
+  for fname in ex_filenames:
+    fpath = folderName+fname
+    with up.open(fpath) as f:
+      # If there's only one TTree in the file
+      tree = f["tree"]
+
+      # Load all branches into a DataFrame
+      df = tree.arrays(library="pd")
+
+    ex_dfs.append(df)
+      
+  return ex_dfs
+
 
 ############################
 ##loadNewtonDoubleDiffData##
