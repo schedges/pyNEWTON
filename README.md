@@ -2,8 +2,18 @@
 OverviewPython adaptation of [NEWTON](https://github.com/itscubist/newton), with a few changes. Still under development...
 
 ## Changes w.r.t. NEWTON:
-- Has different lepton angular distributions for supernova and pion decay-at-rest neutrinos
 - Uses a [fork](https://github.com/schedges/NucDeEx) of [NucDeEx](https://github.com/SeishoAbe/NucDeEx) for the nuclear de-excitation of the residual nucleus
+- Output format
+
+## Required python packges
+- numpy
+- pandas
+- awkward_pandas
+- tqdm
+- scipy
+- uproot
+- matplotlib (for validation plots only)
+- pyROOT (for direct root output only)
 
 ## Overview of approach
 1. Load data:

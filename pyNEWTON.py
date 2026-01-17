@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import pandas as pd
-from matplotlib.colors import LogNorm
 import dataLoaderUtils
 import utils
 import uproot as up
