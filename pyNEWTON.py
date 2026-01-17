@@ -7,7 +7,6 @@ import dataLoaderUtils
 import utils
 import uproot as up
 import awkward_pandas
-import ROOT
 from array import array
 import multiprocessing
 import tqdm
@@ -241,7 +240,7 @@ if __name__ == "__main__":  # required on macOS / Windows
     outFile.close()
 
   elif outputFormat=="root":
-
+    import ROOT
     # Write ROOT with std::vector branches (no n... counter branches)
     f = ROOT.TFile(output_name, "RECREATE")
 
