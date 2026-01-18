@@ -3,13 +3,13 @@ This code follows the conceptual approach of [NEWTON](https://github.com/itscubi
 
 ## Changes w.r.t. NEWTON:
 - Uses a [fork](https://github.com/schedges/NucDeEx) of [NucDeEx](https://github.com/SeishoAbe/NucDeEx) for the nuclear de-excitation of the residual nucleus
-- Added an option to sample directly from Haxton's plot of lepton angle vs. lepton energy. There are some small artifacts introduced using the existing angular sampling from NEWTON, but these are very minor. angular_sampling_comparison.ipynb shows this comparison.
-- Apply a threshold to the partial cross sections used by NEWTON to remove points below the y-axis.
+- Added an option to sample directly from [Haxton's plot](https://journals.aps.org/prc/abstract/10.1103/PhysRevC.37.2660) of lepton angle vs. lepton energy for a muDAR source. There are some small artifacts introduced using the existing angular sampling from NEWTON, but these are very minor. [angular_sampling_comparison.ipynb](checks/angular_sampling_comparison.ipynb) shows this comparison.
+- Apply a threshold to the partial cross sections used by NEWTON to remove points below the y-axis from the Nakazato et al. plots.
 - Output format is either a ROOT TTree or [MARLEY](https://github.com/MARLEY-MC/marley)-style ascii output
 
 ## Running:
 - Specify output format, number of events, and whether you want to use NEWTON's default angular distribution or one specifically taken for muDAR neutrinos. They should be nearly identical for muDAR neutrinos, but only the former will work for other spectra.
-- validation.ipynb is a notebook for checking plots. pyNewton.py is faster, generates no plots, and supports multiprocessing.
+- [validation.ipynb](checks/validation.ipynb) is a notebook for checking plots. pyNewton.py is faster, generates no plots, and supports multiprocessing.
 - Run with the following optional command-line inputs:
 ```bash
 python pyNewton.py [output name] [nps] [angle_sampling_type: newton | mudar]
@@ -49,5 +49,5 @@ python pyNewton.py [output name] [nps] [angle_sampling_type: newton | mudar]
 ## Note:
 The product of these interactions are potentially unstable nuclear isotopes. The decay of those is not handled by this generator, but can be handled with a MC simulator like Geant4
 
-### Data provenance
+## Data provenance
 Some input data files in this repository are reproduced from the itscubist/newton repository (https://github.com/itscubist/newton), which does not contain an explicit license. These files are included with attribution for scientific reproducibility. Users should refer to the original source for terms and permissions.
