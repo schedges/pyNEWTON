@@ -10,9 +10,10 @@ This code follows the conceptual approach of [NEWTON](https://github.com/itscubi
 ## Running:
 - Specify output format, number of events, and whether you want to use NEWTON's default angular distribution or one specifically taken for muDAR neutrinos. They should be nearly identical for muDAR neutrinos, but only the former will work for other spectra.
 - validation.ipynb is a notebook for checking plots. pyNewton.py is faster, generates no plots, and supports multiprocessing.
-- Run with the following optional command-line inputs
-
-`python pyNewton.py [output name] [nps] [angle_sampling_type, either 'newton' or 'mudar']`
+- Run with the following optional command-line inputs:
+```bash
+python pyNewton.py [output name] [nps] [angle_sampling_type: newton | mudar]
+```
 
 ## Required python packages
 - numpy
