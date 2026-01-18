@@ -4,7 +4,7 @@ This code follows the conceptual approach of [NEWTON](https://github.com/itscubi
 ## Changes w.r.t. NEWTON:
 - Uses a [fork](https://github.com/schedges/NucDeEx) of [NucDeEx](https://github.com/SeishoAbe/NucDeEx) for the nuclear de-excitation of the residual nucleus
 - Added an option to sample directly from Haxton's plot of lepton angle vs. lepton energy. There are some small artifacts introduced using the existing angular sampling from NEWTON, but these are very minor. angular_sampling_comparison.ipynb shows this comparison.
-- Apply a threshold to the partial cross section in NEWTON to remove points below the y-axis.
+- Apply a threshold to the partial cross sections used by NEWTON to remove points below the y-axis.
 - Output format is either a ROOT TTree or [MARLEY](https://github.com/MARLEY-MC/marley)-style ascii output
 
 ## Running:
