@@ -1,12 +1,14 @@
 # Overview
-Python adaptation of [NEWTON](https://github.com/itscubist/newton), with a few changes. Relies heavily on all the work Baran has done coming up with this algorithm and digitizing data from plots.
+Python adaptation of [NEWTON](https://github.com/itscubist/newton), with a few changes. Relies heavily on all the work [Baran Bodur](https://github.com/itscubist) has done coming up with this approach and digitizing data from plots--we use data files directly from NEWTON when possible.
 
 ## Changes w.r.t. NEWTON:
 - Uses a [fork](https://github.com/schedges/NucDeEx) of [NucDeEx](https://github.com/SeishoAbe/NucDeEx) for the nuclear de-excitation of the residual nucleus
+- Added an option to sample directly from Haxton's plot of lepton angle vs. lepton energy. There are some small artifacts introduced using the existing angular sampling from NEWTON, but these are very minor. angular_sampling_comparison.ipynb shows this comparison.
+- Output format is either a ROOT TTree or MARLEY-style ascii output
 
 ## Running:
-- Specify output format, number of events, and whether you want to use NEWTON's default angular distribution (recommended) or one specifically taken for muDAR neutrinos. They should be identical for muDAR neutrinos, but only the former will work for other spectra.
-- Validation is a notebook for checking plots, pyNewton is faster, generates no plots, supports multiprocessing, etc.
+- Specify output format, number of events, and whether you want to use NEWTON's default angular distribution or one specifically taken for muDAR neutrinos. They should be nearly identical for muDAR neutrinos, but only the former will work for other spectra.
+- validation.ipynb is a notebook for checking plots. pyNewton.py is faster, generates no plots, and supports multiprocessing.
 
 ## Required python packges
 - numpy
@@ -22,9 +24,9 @@ Python adaptation of [NEWTON](https://github.com/itscubist/newton), with a few c
 1. Load data:
    - Exclusive cross section from (https://journals.aps.org/prd/abstract/10.1103/PhysRevD.36.2283)[W. Haxton, Phys. Rev. D 36, 2283]. We use the data file from NEWTON, and interpolate it to the target energy grid
    - Partial cross sections for Enu=20,40,60 MeV from (https://arxiv.org/abs/1809.08398)[K. Nakazato, et al., arxiv:1809.08398]. Again, we use the files from NEWTON
-   - Lepton opening angle vs. kinetic energy for muDAR neutrinos from (https://journals.aps.org/prc/abstract/10.1103/PhysRevC.37.2660)[W. Haxton, Phys. Rev. C 37 2660]. This is different than what NEWTON uses, which is a similar distribution for supernova neutrinos. We interpolate this over the angle and energy grid.
-   - Lepton opening angle vs. kinetic energy from (https://journals.aps.org/prd/abstract/10.1103/PhysRevD.36.2283)
-   - Nuclear de-excitation data from NucDeEx at the excited levels calculated in the Nakazato et al. paper
+   - Lepton opening angle vs. kinetic energy for muDAR neutrinos from (https://journals.aps.org/prc/abstract/10.1103/PhysRevC.37.2660)[W. Haxton, Phys. Rev. C 37 2660]. This is different than what NEWTON uses, which is based on a similar distribution for supernova neutrinos, unweighted by the spectrum shape. We interpolate this over the angle and energy grid.
+   - Lepton opening angle vs. kinetic energy from [W. Haxton, Phys. Rev. D 36, 2283](https://journals.aps.org/prd/abstract/10.1103/PhysRevD.36.2283)
+   - Nuclear de-excitation data from [NucDeEx](https://github.com/SeishoAbe/NucDeEx) generated at the excited levels calculated in the Nakazato et al. paper
 2. Calculate partial cross sections: Follow the approach from the Nakazato paper to fit the partial cross sections as a function of neutrino energy. We apply a threshold to the partial cross sections from NEWTON, as including some of the values it uses leads to weird fit parameters for some exclusive cross sections. Interpolate over our energy grid.
 3. Calculate the muon decay-at-rest spectrum, fold with the inclusive cross section
 4. Sample events from that folded spectrum. For each event:
