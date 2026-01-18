@@ -4,6 +4,7 @@ This code follows the conceptual approach of [NEWTON](https://github.com/itscubi
 ## Changes w.r.t. NEWTON:
 - Uses a [fork](https://github.com/schedges/NucDeEx) of [NucDeEx](https://github.com/SeishoAbe/NucDeEx) for the nuclear de-excitation of the residual nucleus
 - Added an option to sample directly from Haxton's plot of lepton angle vs. lepton energy. There are some small artifacts introduced using the existing angular sampling from NEWTON, but these are very minor. angular_sampling_comparison.ipynb shows this comparison.
+- Apply a threshold to the partial cross section in NEWTON to remove points below the y-axis.
 - Output format is either a ROOT TTree or [MARLEY](https://github.com/MARLEY-MC/marley)-style ascii output
 
 ## Running:
@@ -30,7 +31,7 @@ This code follows the conceptual approach of [NEWTON](https://github.com/itscubi
    - Lepton opening angle vs. kinetic energy for muDAR neutrinos from [W. Haxton, Phys. Rev. C 37 2660](https://journals.aps.org/prc/abstract/10.1103/PhysRevC.37.2660). This is different than what NEWTON uses, which is based on a similar distribution for supernova neutrinos, unweighted by the spectrum shape. We interpolate this over the angle and energy grid.
    - Lepton opening angle vs. kinetic energy from [W. Haxton, Phys. Rev. D 36, 2283](https://journals.aps.org/prd/abstract/10.1103/PhysRevD.36.2283)
    - Nuclear de-excitation data from [NucDeEx](https://github.com/SeishoAbe/NucDeEx) generated at the excited levels calculated in the Nakazato et al. paper
-2. Calculate partial cross sections: Follow the approach from the Nakazato paper to fit the partial cross sections as a function of neutrino energy. We apply a threshold to the partial cross sections from NEWTON, as including some of the values it uses leads to weird fit parameters for some exclusive cross sections. Interpolate over our energy grid.
+2. Calculate partial cross sections: Follow the approach from the Nakazato paper to fit the partial cross sections as a function of neutrino energy. We apply a threshold to the partial cross sections from NEWTON, as including some of the values it uses leads to unstable fit parameters for some exclusive cross sections. Interpolate over our energy grid.
 3. Calculate the muon decay-at-rest spectrum, fold with the inclusive cross section
 4. Sample events from that folded spectrum. For each event:
     - Sample the excited state using the Nakazato et al. partial cross sections.
