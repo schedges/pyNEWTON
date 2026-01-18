@@ -22,7 +22,7 @@ if __name__ == "__main__":  # required on macOS / Windows
   ##################
   ##RUN PARAMETERS##
   ##################
-  if len(sys.argv)==2:
+  if len(sys.argv)>=2:
     output_name=sys.argv[1]
   else:
     output_name = "test.root"
@@ -30,9 +30,22 @@ if __name__ == "__main__":  # required on macOS / Windows
      outputFormat="root"
   else:
      outputFormat="ascii"
-  nps = 1000000
-  angle_sampling_type = "NEWTON" #'MuDAR' uses haxton angle plot for muDAR source, 
-                                #'NEWTON' uses default NEWTON angle sampling
+
+  if len(sys.argv)>=3:
+    nps = int(sys.argv[3])
+  else:
+     nps = 1000000
+
+  
+  if len(sys.argv)>=4:
+    if sys.argv[3].lower() == "newton" or sys.argv[3].lower()=="mudar":
+       angle_sampling_type = sys.argv[3].lower()
+    else:
+       angle_sampling_type = "newton"
+       print("Unsupported angle sampling type specified. Options are 'newton' or 'mudar'. Defaulting to 'newton'")
+  else:
+    angle_sampling_type = "newton" #'mudar' uses haxton angle plot for muDAR source, 
+                                  #'newton' uses default NEWTON angle sampling
 
   #############################
   ##NEUTRINO SOURCE PARAMTERS##
@@ -156,7 +169,7 @@ if __name__ == "__main__":  # required on macOS / Windows
   ################################################
   ##LOAD LEPTON ANGLE DISTRIBUTIONS, INTERPOLATE##
   ################################################
-  if angle_sampling_type=="MuDAR":
+  if angle_sampling_type=="mudar":
     lepton_angles_raw,lepton_energies_raw,lepton_angle_xs_raw = dataLoaderUtils.loadHaxtonMuDARAngles(MuDAR_lepton_angle_fname)
     #Intepolate the above plot over our energy/angle grid
     angle_vs_lepton_energy_vs_xs_cm2 = utils.interpolateHaxtonMuDARAngles(lepton_angles_raw,angles_deg_interp,lepton_energies_raw,energies_MeV_interp,lepton_angle_xs_raw)

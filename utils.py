@@ -425,7 +425,7 @@ def sampleEvent(args):
   header["Ee_sampled"] = Ee_sampled
 
   #Use approximate lepton energy to sample lepton angle
-  if angle_sampling_type=="MuDAR":
+  if angle_sampling_type=="mudar":
     event_lepton_theta_deg = np.random.choice(angles_deg_interp,p=lepton_angle_probs[:,Ee_idx])
   else:
     Enu_idx = np.searchsorted(energies_MeV_interp,Enu)
