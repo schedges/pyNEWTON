@@ -37,7 +37,7 @@ python pyNewton.py [output name] [nps] [angle_sampling_type: newton | mudar]
 4. Sample events from that folded spectrum. For each event:
     - Sample the excited state using the Nakazato et al. partial cross sections.
     - If angular distribution sampling set to 'mudar':
-       - Estimate the lepton energy (E_lep = E_nu - Ex - Threshold)
+      - Estimate the lepton energy (E_lep = E_nu - Ex - Threshold)
       - Use that energy to sample an angle for the lepton
     - Otherwise:
       - Samples from Enu vs. lepton angle plots for each Ex
