@@ -48,3 +48,6 @@ python pyNewton.py [output name] [nps] [angle_sampling_type: newton | mudar]
 
 ## Note:
 The product of these interactions are potentially unstable nuclear isotopes. The decay of those is not handled by this generator, but can be handled with a MC simulator like Geant4
+
+### Data provenance
+Some input data files in this repository are reproduced from the itscubist/newton repository (https://github.com/itscubist/newton), which does not contain an explicit license. These files are included with attribution for scientific reproducibility. Users should refer to the original source for terms and permissions.
