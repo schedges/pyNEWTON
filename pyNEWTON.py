@@ -6,6 +6,7 @@ import awkward_pandas
 from array import array
 import multiprocessing
 import tqdm
+import sys
 
 def _init_worker(items):
     import utils
@@ -21,9 +22,15 @@ if __name__ == "__main__":  # required on macOS / Windows
   ##################
   ##RUN PARAMETERS##
   ##################
-  output_name = "test.root"
-  outputFormat = "root" #'root', 'ascii'
-  nps = 100000
+  if len(sys.argv)==2:
+    output_name=sys.argv[1]
+  else:
+    output_name = "test.root"
+  if output_name.endswith(".root"):
+     outputFormat="root"
+  else:
+     outputFormat="ascii"
+  nps = 1000000
   angle_sampling_type = "NEWTON" #'MuDAR' uses haxton angle plot for muDAR source, 
                                 #'NEWTON' uses default NEWTON angle sampling
 
@@ -38,7 +45,7 @@ if __name__ == "__main__":  # required on macOS / Windows
   ################
   #Define energy grid
   interpolationStep_MeV = 0.01 #Interpolate digitized xs plots with this precision
-  maxEnergy_MeV = 53
+  maxEnergy_MeV = 54
   energies_MeV_interp = np.arange(0,maxEnergy_MeV,interpolationStep_MeV)
   #Define angle grid
   interpolationStep_deg = 1.
@@ -144,6 +151,7 @@ if __name__ == "__main__":  # required on macOS / Windows
   den = np.trapezoid(dar_spectrum, energies_MeV_interp)
   flux_averaged_xs = num / den
   flux_averaged_xs_naturalunits = flux_averaged_xs/utils.hbar_c_squared
+  print(f"Flux-averaged cross section is {flux_averaged_xs:.3e} cm2")
 
   ################################################
   ##LOAD LEPTON ANGLE DISTRIBUTIONS, INTERPOLATE##
