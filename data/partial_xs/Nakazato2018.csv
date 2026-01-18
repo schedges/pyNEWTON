@@ -1,3 +1,6 @@
+# Digitized data originally produced by Baran Bodur
+# Sourced from the NEWTON repository (no license specified)
+# Included here for scientific reproducibility with attribution
 #Energy (MeV) [w.r.t. 16O ground state],J,Parity,XS 20 MeV (cm2),XS 40 MeV (cm2),XS 60 MeV (cm2)
 Energy,J,Parity,XS@20,XS@40,XS@60
 14.91,0,1,1.280E-45,3.540E-44,1.320E-43
