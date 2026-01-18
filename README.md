@@ -4,7 +4,7 @@ Python adaptation of [NEWTON](https://github.com/itscubist/newton), with a few c
 ## Changes w.r.t. NEWTON:
 - Uses a [fork](https://github.com/schedges/NucDeEx) of [NucDeEx](https://github.com/SeishoAbe/NucDeEx) for the nuclear de-excitation of the residual nucleus
 - Added an option to sample directly from Haxton's plot of lepton angle vs. lepton energy. There are some small artifacts introduced using the existing angular sampling from NEWTON, but these are very minor. angular_sampling_comparison.ipynb shows this comparison.
-- Output format is either a ROOT TTree or MARLEY-style ascii output
+- Output format is either a ROOT TTree or [MARLEY](https://github.com/MARLEY-MC/marley)-style ascii output
 
 ## Running:
 - Specify output format, number of events, and whether you want to use NEWTON's default angular distribution or one specifically taken for muDAR neutrinos. They should be nearly identical for muDAR neutrinos, but only the former will work for other spectra.
