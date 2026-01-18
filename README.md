@@ -1,5 +1,5 @@
 # Overview
-Python adaptation of [NEWTON](https://github.com/itscubist/newton), with a few changes. Relies heavily on all the work [Baran Bodur](https://github.com/itscubist) has done coming up with this approach and digitizing data from plots--we use data files directly from NEWTON when possible.
+This code follows the conceptual approach of [NEWTON](https://github.com/itscubist/newton). Where possible, digitized data files from the original NEWTON repository are reused with attribution. Credit to [Baran Bodur](https://github.com/itscubist) for coming up with this approach and digitizing data.
 
 ## Changes w.r.t. NEWTON:
 - Uses a [fork](https://github.com/schedges/NucDeEx) of [NucDeEx](https://github.com/SeishoAbe/NucDeEx) for the nuclear de-excitation of the residual nucleus
@@ -13,7 +13,7 @@ Python adaptation of [NEWTON](https://github.com/itscubist/newton), with a few c
 
 `python pyNewton.py [output name] [nps] [angle_sampling_type, either 'newton' or 'mudar']`
 
-## Required python packges
+## Required python packages
 - numpy
 - pandas
 - awkward_pandas
@@ -25,17 +25,16 @@ Python adaptation of [NEWTON](https://github.com/itscubist/newton), with a few c
 
 ## Overview of approach
 1. Load data:
-   - Exclusive cross section from (https://journals.aps.org/prd/abstract/10.1103/PhysRevD.36.2283)[W. Haxton, Phys. Rev. D 36, 2283]. We use the data file from NEWTON, and interpolate it to the target energy grid
-   - Partial cross sections for Enu=20,40,60 MeV from (https://arxiv.org/abs/1809.08398)[K. Nakazato, et al., arxiv:1809.08398]. Again, we use the files from NEWTON
-   - Lepton opening angle vs. kinetic energy for muDAR neutrinos from (https://journals.aps.org/prc/abstract/10.1103/PhysRevC.37.2660)[W. Haxton, Phys. Rev. C 37 2660]. This is different than what NEWTON uses, which is based on a similar distribution for supernova neutrinos, unweighted by the spectrum shape. We interpolate this over the angle and energy grid.
+   - Exclusive cross section from [W. Haxton, Phys. Rev. D 36, 2283](https://journals.aps.org/prd/abstract/10.1103/PhysRevD.36.2283). We use the data file from NEWTON, and interpolate it to the target energy grid
+   - Partial cross sections for Enu=20,40,60 MeV from [K. Nakazato, et al., arxiv:1809.08398](https://arxiv.org/abs/1809.08398). Again, we use the files from NEWTON
+   - Lepton opening angle vs. kinetic energy for muDAR neutrinos from [W. Haxton, Phys. Rev. C 37 2660](https://journals.aps.org/prc/abstract/10.1103/PhysRevC.37.2660). This is different than what NEWTON uses, which is based on a similar distribution for supernova neutrinos, unweighted by the spectrum shape. We interpolate this over the angle and energy grid.
    - Lepton opening angle vs. kinetic energy from [W. Haxton, Phys. Rev. D 36, 2283](https://journals.aps.org/prd/abstract/10.1103/PhysRevD.36.2283)
    - Nuclear de-excitation data from [NucDeEx](https://github.com/SeishoAbe/NucDeEx) generated at the excited levels calculated in the Nakazato et al. paper
 2. Calculate partial cross sections: Follow the approach from the Nakazato paper to fit the partial cross sections as a function of neutrino energy. We apply a threshold to the partial cross sections from NEWTON, as including some of the values it uses leads to weird fit parameters for some exclusive cross sections. Interpolate over our energy grid.
 3. Calculate the muon decay-at-rest spectrum, fold with the inclusive cross section
 4. Sample events from that folded spectrum. For each event:
-5. For each sampled neutrino event:
     - Sample the excited state using the Nakazato et al. partial cross sections.
-    - If angular distribution sampling set to MuDar:
+    - If angular distribution sampling set to 'mudar':
        - Estimate the lepton energy (E_lep = E_nu - Ex - Threshold)
       - Use that energy to sample an angle for the lepton
     - Otherwise:
