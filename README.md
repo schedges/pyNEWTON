@@ -1,5 +1,5 @@
 # Overview
-This code follows the conceptual approach of [NEWTON](https://github.com/itscubist/newton). Where possible, digitized data files from the original NEWTON repository are reused with attribution. Credit to [Baran Bodur](https://github.com/itscubist) for coming up with this approach and digitizing data.
+This code follows the conceptual approach of [NEWTON](https://github.com/itscubist/newton), but is an independent Python implementation with some differences as described below. Where possible, digitized data files from the original NEWTON repository are reused with attribution. Credit to [Baran Bodur](https://github.com/itscubist) for coming up with this approach and digitizing data.
 
 ## Changes w.r.t. NEWTON:
 - Uses a [fork](https://github.com/schedges/NucDeEx) of [NucDeEx](https://github.com/SeishoAbe/NucDeEx) for the nuclear de-excitation of the residual nucleus
@@ -41,10 +41,10 @@ python pyNewton.py [output name] [nps] [angle_sampling_type: newton | mudar]
       - Use that energy to sample an angle for the lepton
     - Otherwise:
       - Samples from Enu vs. lepton angle plots for each Ex
-    - Use kinematics to calculate an exact lepton energy. I believe this is different from standard NEWTON which ignores the nuclear recoil
+    - Use kinematics to calculate an exact lepton energy.
     - Use that lepton energy to calculate the nuclear recoil.
     - Sample de-excitation products for this Ex using NucDeEx. Boost these by the nuclear recoil
-6. Write out events
+5. Write out events
 
 ## Note:
 The product of these interactions are potentially unstable nuclear isotopes. The decay of those is not handled by this generator, but can be handled with a MC simulator like Geant4
