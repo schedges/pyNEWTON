@@ -32,7 +32,7 @@ if __name__ == "__main__":  # required on macOS / Windows
      outputFormat="ascii"
 
   if len(sys.argv)>=3:
-    nps = int(sys.argv[3])
+    nps = int(sys.argv[2])
   else:
      nps = 1000000
 

@@ -121,7 +121,7 @@ def loadNewtonDoubleDiffData(folderName):
   Enus_vs_angle_raw = []
 
   for f in files:
-    data = pd.read_csv(f, sep=r'\s+', header=None).values
+    data = pd.read_csv(f, sep=r'\s+', header=None, comment="#").values
 
     Enus_raw.append(data[:, 0])
     xs_matrix = data[:, 1:]

@@ -452,8 +452,9 @@ def sampleEvent(args):
   })
 
   #Determine Nuclear Recoil Vector (Conservation: p_nu = p_lep + p_res)
-  Eres_MeV = (Enu + target_nuc_mass) - Ee_MeV
-  p_res_vec = p_nu_vec - p_lep_vec
+  Mstar = res_nuc_mass + event_excitation_energy_MeV    
+  p_res_vec = p_nu_vec - p_lep_vec    
+  Eres_MeV = np.sqrt(np.dot(p_res_vec, p_res_vec) + Mstar**2)
   PXres, PYres, PZres = p_res_vec
   #Define boost vector of recoiling nucleus (beta = p/E)
   beta_vec = np.array([PXres, PYres, PZres]) / Eres_MeV
