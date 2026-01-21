@@ -127,7 +127,7 @@ def loadNewtonDoubleDiffData(folderName):
     xs_matrix = data[:, 1:]
     xs_matrix_flipped = np.flip(xs_matrix, axis=1)
 
-    Enus_vs_angle_raw.append(xs_matrix_flipped)
+    Enus_vs_angle_raw.append(xs_matrix_flipped.T)
   
   Enus_raw=np.asarray(Enus_raw)
   Enus_vs_angle_raw=np.asarray(Enus_vs_angle_raw)

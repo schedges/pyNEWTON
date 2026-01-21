@@ -153,12 +153,38 @@ def interpolateHaxtonMuDARAngles(angles_raw,angles_interp,lepton_energies_raw,en
   
   return angle_energy_xs_cm2
 
-#DOES A SINGLE EX STATE
-def interpolateNEWTONAnglesAndNormalize(angles_raw,angles_interp,energies_raw,energies_interp,neutrino_energy_vs_angle_vs_xs):
+def addThresholdRowToNewtonData(Enus_raw, xs_matrices_raw, excitedLevels):
+  patched_Enus = []
+  patched_xs = []
+
+  for i in range(len(xs_matrices_raw)):
+    E_ex = excitedLevels[i]
+    T_phys = mass_e_MeV + E_ex
+    
+    enu_file = Enus_raw[i]
+    xs_file = xs_matrices_raw[i] # Shape (Energy, 20))
+    
+    # 1. Identify insertion point
+    idx = np.searchsorted(enu_file, T_phys)
+    
+    # 2. Insert the physical threshold anchor
+    enu_patched = np.insert(enu_file, idx, T_phys)
+    xs_patched = np.insert(xs_file, idx, np.zeros(20), axis=1)
+    
+    # 3. Explicitly zero out anything below threshold to remove file noise
+    xs_patched[:,enu_patched < T_phys] = 0.0
+    
+    patched_Enus.append(enu_patched)
+    patched_xs.append(xs_patched)
+    
+  return patched_Enus, patched_xs
+
+#DOES A SINGLE EX STATE MATRIX
+def interpolateNEWTONAngles(angles_raw,angles_interp,energies_raw,energies_interp,neutrino_energy_vs_angle_vs_xs):
   neutrino_energy_vs_angle_xs_lists = []
 
   for ideg,deg in enumerate(angles_raw):
-    row = np.interp(energies_interp, energies_raw,neutrino_energy_vs_angle_vs_xs[:,ideg],left=0,right=0)
+    row = np.interp(energies_interp, energies_raw,neutrino_energy_vs_angle_vs_xs[ideg,:],left=0,right=0)
     neutrino_energy_vs_angle_xs_lists.append(row)
 
   #Copy first angle for 0 deg, last angle for 180 deg
@@ -180,34 +206,41 @@ def interpolateNEWTONAnglesAndNormalize(angles_raw,angles_interp,energies_raw,en
   #Interpolate
   angle_energy_xs_cm2 = grid_interp((A, E), method="linear")
 
+  return angle_energy_xs_cm2
+
+#DOES A SINGLE EX STATE MATRIX
+def normalizeNEWTONAngles(angles_interp,neutrino_energy_vs_angle_vs_xs,sinWeighting=True):
   #Normalize 
-  angles_rad = np.radians(angles_interp)
-    
-  sin_weight = 2 * np.pi * np.sin(angles_rad)[:, np.newaxis]
-  unnormalized_pdf = angle_energy_xs_cm2 * sin_weight
-  
+  if sinWeighting==True:
+    angles_rad = np.radians(angles_interp)
+      
+    sin_weight = 2 * np.pi * np.sin(angles_rad)[:, np.newaxis]
+    unnormalized_pdf = neutrino_energy_vs_angle_vs_xs * sin_weight
+  else:
+     unnormalized_pdf = neutrino_energy_vs_angle_vs_xs
+
   #Integrate over the angle axis (axis 0) using the trapezoid rule
   total_xs_per_energy = np.sum(unnormalized_pdf, axis=0)
   norm_factor = np.where(total_xs_per_energy > 0, total_xs_per_energy, 1.0)
   pdf = unnormalized_pdf / norm_factor
+  return pdf
 
-  return pdf,unnormalized_pdf
-
-def checkNewtonAnglesPlot(xs_matrices_raw, folded_spectrum, excitedLevels_MeV, energies_MeV_interp,threshold=15.412):
+def checkNewtonAnglesPlot(xs_matrices_raw, dar_spectrum, partial_xs, total_xs, excitedLevels_MeV, energies_MeV_interp,threshold=15.41):
   total_weighted_xs = np.zeros_like(xs_matrices_raw[0])
-
-  #Normalize neutrino spectrum
-  norm_spectrum = folded_spectrum / np.trapz(folded_spectrum, x=energies_MeV_interp)
 
   # Iterate through each excitation state matrix
   for i, xs_matrix in enumerate(xs_matrices_raw):
-    E_ex = excitedLevels_MeV[i]
+    E_ex = excitedLevels_MeV[i] #Relative to 16F ground state
+
+    partials_sum = np.sum(partial_xs, axis=0)                
+    frac = partial_xs[i] / np.where(partials_sum > 0, partials_sum, 1.0)
+    folded_spectrum = (frac * total_xs) * dar_spectrum       
 
     #Weigh the Enu vs. lepton vs. xs matrix by the neutrino spectrum
-    weighted_xs = xs_matrix * norm_spectrum
+    weighted_xs = xs_matrix * folded_spectrum[None,:]
+    
     Ex_xs = np.array([np.interp(energies_MeV_interp, energies_MeV_interp - (E_ex + threshold), row, left=0, right=0) for row in weighted_xs])
 
-    # 4. Sum it up
     total_weighted_xs += Ex_xs  
         
   return total_weighted_xs

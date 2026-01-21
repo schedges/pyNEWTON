@@ -170,35 +170,38 @@ if __name__ == "__main__":  # required on macOS / Windows
   ##LOAD LEPTON ANGLE DISTRIBUTIONS, INTERPOLATE##
   ################################################
   if angle_sampling_type=="mudar":
-    lepton_angles_raw,lepton_energies_raw,lepton_angle_xs_raw = dataLoaderUtils.loadHaxtonMuDARAngles(MuDAR_lepton_angle_fname)
+    lepton_angles_raw,lepton_energies_raw,Elep_v_angle_dOmega_raw = dataLoaderUtils.loadHaxtonMuDARAngles(MuDAR_lepton_angle_fname)
     #Intepolate the above plot over our energy/angle grid
-    angle_vs_lepton_energy_vs_xs_cm2 = utils.interpolateHaxtonMuDARAngles(lepton_angles_raw,angles_deg_interp,lepton_energies_raw,energies_MeV_interp,lepton_angle_xs_raw)
+    Elep_v_angle_dOmega = utils.interpolateHaxtonMuDARAngles(lepton_angles_raw,angles_deg_interp,lepton_energies_raw,energies_MeV_interp,Elep_v_angle_dOmega_raw)
 
     #Modify angular distribution based on solid angle subtended by each theta
     theta_rad_interp = np.deg2rad(angles_deg_interp)
     sin_weights = np.sin(theta_rad_interp)
-    weighted_xs = angle_vs_lepton_energy_vs_xs_cm2 * sin_weights[:, np.newaxis]
+    Elep_v_angle_dTheta_dPhi = Elep_v_angle_dOmega * sin_weights[:, np.newaxis]
 
     #Create probabilitiy distributions, normalized per lepton energy
-    lepton_angle_probs = np.zeros_like(weighted_xs)
-    colsum = weighted_xs.sum(axis=0)
+    Elep_v_angle_dTheta_dPhi_pdf = np.zeros_like(Elep_v_angle_dTheta_dPhi)
+    colsum = Elep_v_angle_dTheta_dPhi.sum(axis=0)
     mask = colsum > 0
-    lepton_angle_probs[:, mask] = weighted_xs[:, mask] / colsum[mask]
-  else:
-    angles_deg_raw, Enus_NEWTON_raw, Enus_vs_angle_raw = dataLoaderUtils.loadNewtonDoubleDiffData(newton_lepton_angle_folder)
-    lepton_angle_probs = []
-    Enus_vs_lepton_angles_vs_xs_cm2 = []
-    for iEx,Enu_energy_dist_raw in enumerate(Enus_NEWTON_raw):
-      pdf,unnormalized_pdf = utils.interpolateNEWTONAnglesAndNormalize(
-                                                                angles_deg_raw,
-                                                                angles_deg_interp,
-                                                                Enus_NEWTON_raw[iEx],
-                                                                energies_MeV_interp,
-                                                                Enus_vs_angle_raw[iEx]
-                                                                )
-      lepton_angle_probs.append(pdf)
-    lepton_angle_probs = np.array(lepton_angle_probs)
+    Elep_v_angle_dTheta_dPhi_pdf[:, mask] = Elep_v_angle_dTheta_dPhi[:, mask] / colsum[mask]
 
+  #######################################################
+  ##LOAD NEWTON LEPTON ANGLE DISTRIBUTIONS, INTERPOLATE##
+  #######################################################
+  else:
+    #Each row is normalized to 1
+    angles_deg_raw, Enus_NEWTON_raw, Enu_v_angle_dOmega_raw = dataLoaderUtils.loadNewtonDoubleDiffData(newton_lepton_angle_folder)
+    #Add threshold for sane interpolation near threshold
+    Enus_NEWTON_raw, Enu_v_angle_dOmega = utils.addThresholdRowToNewtonData(Enus_NEWTON_raw, Enu_v_angle_dOmega_raw, excitedLevels_MeV)
+
+    Enu_v_angle_dTheta_dPhi_pdfs = []
+    for iEx,_ in enumerate(excitedLevels_MeV):
+      #Interpolate    
+      Enu_v_angle_dOmega_interp = utils.interpolateNEWTONAngles(angles_deg_raw,angles_deg_interp,Enus_NEWTON_raw[iEx],energies_MeV_interp,Enu_v_angle_dOmega[iEx])
+      #Weigh by sin(theta) for correct angular sampling, normalize rows to 1
+      Enu_v_angle_dTheta_dPhi_pdf = utils.normalizeNEWTONAngles(angles_deg_interp,Enu_v_angle_dOmega_interp,sinWeighting=True)
+      Enu_v_angle_dTheta_dPhi_pdfs.append(Enu_v_angle_dTheta_dPhi_pdf)
+    Enu_v_angle_dTheta_dPhi_pdfs = np.array(Enu_v_angle_dTheta_dPhi_pdfs)
   ###########################
   ##Load de-excitation data##
   ###########################
@@ -215,11 +218,20 @@ if __name__ == "__main__":  # required on macOS / Windows
   sampled_thetas_deg = []
 
   #Wrap up args to even sampler
-  items = [energies_MeV_interp,excitedLevels_MeV,excitedLevels_J,excitedLevels_parity,excitation_probs,ex_dfs,
-          angles_deg_interp,lepton_angle_probs,
-          neutrino_direction,utils.nuc_mass_16O_MeV,utils.nuc_mass_16F_MeV,
-          "16O","16F","ve","electron",angle_sampling_type]
-  
+  if angle_sampling_type=="newton":
+    items = [energies_MeV_interp,excitedLevels_MeV,excitedLevels_J,excitedLevels_parity,excitation_probs,ex_dfs,
+            angles_deg_interp,Enu_v_angle_dTheta_dPhi_pdfs,
+            neutrino_direction,utils.nuc_mass_16O_MeV,utils.nuc_mass_16F_MeV,
+            "16O","16F","ve","electron",angle_sampling_type]
+  elif angle_sampling_type=="mudar":
+    items = [energies_MeV_interp,excitedLevels_MeV,excitedLevels_J,excitedLevels_parity,excitation_probs,ex_dfs,
+            angles_deg_interp,Elep_v_angle_dTheta_dPhi_pdf,
+            neutrino_direction,utils.nuc_mass_16O_MeV,utils.nuc_mass_16F_MeV,
+            "16O","16F","ve","electron",angle_sampling_type]
+  else:
+    print("Error! Invalid sampling type")
+    sys.exit()
+
   with multiprocessing.Pool(nCPU,initializer=_init_worker,initargs=(items,)) as pool:
     results = list(tqdm.tqdm(pool.imap(_call_sampleEvent, sampled_neutrino_energies_MeV, chunksize=200),total=len(sampled_neutrino_energies_MeV)))
     
