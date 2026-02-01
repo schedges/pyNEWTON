@@ -10,6 +10,7 @@ This code follows the conceptual approach of [NEWTON](https://github.com/itscubi
 ## Running:
 - Specify output format, number of events, and whether you want to use NEWTON's default angular distribution or one specifically taken for muDAR neutrinos. They should be nearly identical for muDAR neutrinos, but only the former will work for other spectra.
 - [validation.ipynb](checks/validation.ipynb) is a notebook for checking plots. pyNewton.py is faster, generates no plots, and supports multiprocessing.
+- [kinematic_checks.ipynb](checks/kinematic_checks.ipynb) checks momentum and energy are conserved. There is some smearing due to the binning of NucDeEx, we could try to fix this with interpolation but for now we will accept this ~hundred keV smearing.
 - Run with the following optional command-line inputs:
 ```bash
 python pyNewton.py [output name] [nps] [angle_sampling_type: newton | mudar]
