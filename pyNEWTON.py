@@ -364,5 +364,5 @@ if __name__ == "__main__":  # required on macOS / Windows
         outCharge.push_back(float(p["charge"]))
 
       t.Fill()
-  t.Write()
+  t.Write("eventTree",ROOT.TObject.kOverwrite)
   f.Close()
